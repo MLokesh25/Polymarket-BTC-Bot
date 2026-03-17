@@ -17,10 +17,9 @@ class APIConfig:
 class StrategyConfig:
     start_side: str = "UP"
     stake_usd: Decimal = Decimal("2")
-    block_size: int = 3
     cashout_threshold: Decimal = Decimal("0.20")
+    max_cashouts_in_row: int = 3
     daily_loss_limit: Decimal = Decimal("-10")
-    max_losing_blocks_in_row: int = 2
     max_spread: Decimal = Decimal("0.04")
     min_top_book_size: Decimal = Decimal("50")
     min_seconds_to_expiry: int = 45

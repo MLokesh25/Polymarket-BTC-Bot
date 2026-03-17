@@ -24,6 +24,8 @@ class PaperStrategy:
 
     def decide_entry(self, up: AssetState, down: AssetState, expiry: datetime, stats: StrategyStats) -> StrategyDecision:
         now = datetime.now(timezone.utc)
+        if stats.cashouts_in_row >= self.config.max_cashouts_in_row:
+            return StrategyDecision(False, "max_cashouts_in_row_reached")
         if stats.daily_pnl <= self.config.daily_loss_limit:
             return StrategyDecision(False, "daily_loss_limit_reached")
         if (expiry - now).total_seconds() < self.config.min_seconds_to_expiry:
@@ -68,22 +70,11 @@ class PaperStrategy:
         state.winner = winner
         if state.opened_price is None:
             state.pnl = Decimal("0")
+            self.next_side = winner
             return
 
         qty = state.stake_usd / state.opened_price
         if state.cashout_price is None:
             state.pnl = qty * ((Decimal("1") if state.chosen_side == winner else Decimal("0")) - state.opened_price)
 
-    def update_block_state(self, stats: StrategyStats) -> None:
-        if stats.current_block_rounds < self.config.block_size:
-            return
-
-        stats.blocks_completed += 1
-        if stats.current_block_wins >= 2:
-            stats.losing_blocks_in_row = 0
-        else:
-            stats.losing_blocks_in_row += 1
-            self.next_side = Side.DOWN if self.next_side is Side.UP else Side.UP
-
-        stats.current_block_rounds = 0
-        stats.current_block_wins = 0
+        self.next_side = winner

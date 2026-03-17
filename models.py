@@ -74,12 +74,9 @@ class StrategyStats:
     wins: int = 0
     losses: int = 0
     cashouts: int = 0
+    cashouts_in_row: int = 0
     skipped: int = 0
     daily_pnl: Decimal = Decimal("0")
-    blocks_completed: int = 0
-    current_block_rounds: int = 0
-    current_block_wins: int = 0
-    losing_blocks_in_row: int = 0
 
 
 @dataclass(slots=True)

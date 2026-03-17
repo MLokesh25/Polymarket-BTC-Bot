@@ -49,7 +49,6 @@ class SessionEngine:
                 else:
                     state = await self._run_one_round(rest, ws, strategy, stats)
                 update_stats(stats, state)
-                strategy.update_block_state(stats)
                 rounds_completed += 1
                 self._append_round(state, self.config.runtime.output_path)
                 print(render_summary(stats), flush=True)
@@ -57,11 +56,11 @@ class SessionEngine:
                 if max_rounds is not None and rounds_completed >= max_rounds:
                     print(f"Stopping session: max rounds ({max_rounds}) reached.")
                     break
+                if stats.cashouts_in_row >= self.config.strategy.max_cashouts_in_row:
+                    print("Stopping session: 3 consecutive cashouts reached.")
+                    break
                 if stats.daily_pnl <= self.config.strategy.daily_loss_limit:
                     print("Stopping session: daily P&L loss limit reached.")
-                    break
-                if stats.losing_blocks_in_row >= self.config.strategy.max_losing_blocks_in_row:
-                    print("Stopping session: 2 losing blocks in a row reached.")
                     break
         finally:
             if rest is not None:
@@ -102,6 +101,7 @@ class SessionEngine:
                 elif decision.skip_reason is not None:
                     state.skipped_reason = decision.skip_reason
                     if decision.skip_reason in {
+                        "max_cashouts_in_row_reached",
                         "daily_loss_limit_reached",
                         "too_close_to_expiry",
                     }:
